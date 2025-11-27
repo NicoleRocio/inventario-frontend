@@ -117,7 +117,7 @@ const Sidebar = ({ isOpen, usuario }) => {
   }
 
   const nombreUsuario = usuario?.nombre || "Usuario";
-  const rolUsuario = usuario?.empleado?.roles?.[0]?.nombre || "Sin rol";
+  const rolUsuario = usuario?.roles?.[0] || "Sin rol";
 
   return (
     <SidebarContainer isOpen={isOpen}>
@@ -148,9 +148,10 @@ const Sidebar = ({ isOpen, usuario }) => {
         </SubMenuItem>
       </SubMenu>
 
+      {/* PEDIDOS */}
       <MenuItem onClick={() => toggleMenu("pedidos")}>
         Pedidos
-        {openMenu === "inventario" ? <FaChevronUp /> : <FaChevronDown />}
+        {openMenu === "pedidos" ? <FaChevronUp /> : <FaChevronDown />}
       </MenuItem>
 
       <SubMenu isOpen={openMenu === "pedidos"}>
@@ -160,40 +161,43 @@ const Sidebar = ({ isOpen, usuario }) => {
         <SubMenuItem onClick={() => navigate("/mis-productos")}>
           Mis Productos Asignados
         </SubMenuItem>
+        <SubMenuItem onClick={() => navigate("/pedidos-usuarios")}>
+          Lista de pedidos de usuarios
+        </SubMenuItem>
 
       </SubMenu>
 
-        {/* ASISTENCIA */}
-        <MenuItem onClick={() => toggleMenu("asistencia")}>
-          Asistencia
-          {openMenu === "asistencia" ? <FaChevronUp /> : <FaChevronDown />}
-        </MenuItem>
+      {/* ASISTENCIA */}
+      <MenuItem onClick={() => toggleMenu("asistencia")}>
+        Asistencia
+        {openMenu === "asistencia" ? <FaChevronUp /> : <FaChevronDown />}
+      </MenuItem>
 
-        <SubMenu isOpen={openMenu === "asistencia"}>
-          <SubMenuItem onClick={() => navigate("/asistencia")}>
-            Ver asistencia
-          </SubMenuItem>
+      <SubMenu isOpen={openMenu === "asistencia"}>
+        <SubMenuItem onClick={() => navigate("/asistencia")}>
+          Ver asistencia
+        </SubMenuItem>
 
-          <SubMenuItem onClick={() => navigate("/justificaciones")}>
-            Justificaciones
-          </SubMenuItem>
-        </SubMenu>
+        <SubMenuItem onClick={() => navigate("/justificaciones")}>
+          Justificaciones
+        </SubMenuItem>
+      </SubMenu>
 
-        {/* SOPORTE */}
-        <MenuItem onClick={() => toggleMenu("soporte")}>
-          Mantenimiento y Soporte
-          {openMenu === "soporte" ? <FaChevronUp /> : <FaChevronDown />}
-        </MenuItem>
+      {/* SOPORTE */}
+      <MenuItem onClick={() => toggleMenu("soporte")}>
+        Mantenimiento y Soporte
+        {openMenu === "soporte" ? <FaChevronUp /> : <FaChevronDown />}
+      </MenuItem>
 
-        <SubMenu isOpen={openMenu === "soporte"}>
-          <SubMenuItem onClick={() => navigate("/generar-incidencia")}>
-            Generar incidencias
-          </SubMenuItem>
+      <SubMenu isOpen={openMenu === "soporte"}>
+        <SubMenuItem onClick={() => navigate("/generar-incidencia")}>
+          Generar incidencias
+        </SubMenuItem>
 
-          <SubMenuItem onClick={() => navigate("/lista-incidencias")}>
-            Lista de incidencias
-          </SubMenuItem>
-        </SubMenu>
+        <SubMenuItem onClick={() => navigate("/lista-incidencias")}>
+          Lista de incidencias
+        </SubMenuItem>
+      </SubMenu>
     </SidebarContainer>
   );
 };

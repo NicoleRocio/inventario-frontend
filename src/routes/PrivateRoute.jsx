@@ -1,14 +1,20 @@
 import { Navigate, Outlet } from "react-router-dom";
 
 const PrivateRoute = () => {
-  const usuario = localStorage.getItem("usuario");
+  let usuario = null;
 
-  // 🔹 Si no hay usuario logueado, redirige al login
-  if (!usuario) {
+  try {
+    usuario = JSON.parse(localStorage.getItem("usuario"));
+  } catch (e) {
+    console.error("Error al leer usuario:", e);
     return <Navigate to="/login" replace />;
   }
 
-  // 🔹 Si hay sesión, renderiza el contenido normal
+  // 🔹 Validar usuario válido
+  if (!usuario || !usuario.id) {
+    return <Navigate to="/login" replace />;
+  }
+
   return <Outlet />;
 };
 

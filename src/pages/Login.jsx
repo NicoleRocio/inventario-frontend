@@ -4,14 +4,12 @@ import styled, { keyframes } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import logoColegio from "../assets/logo-colegio.png";
 
-// ✨ Animación del degradado en movimiento
 const shine = keyframes`
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 `;
 
-// 🎨 Contenedor principal
 const Container = styled.div`
   display: flex;
   height: 100vh;
@@ -20,7 +18,6 @@ const Container = styled.div`
   font-family: "Poppins", sans-serif;
 `;
 
-// Panel izquierdo: formulario
 const LeftPanel = styled.div`
   flex: 0.5;
   background: #ffffff;
@@ -33,7 +30,6 @@ const LeftPanel = styled.div`
   z-index: 2;
 `;
 
-// 🩵 Panel derecho: efecto glass ocupando todo
 const RightPanel = styled.div`
   flex: 1.5;
   position: relative;
@@ -46,7 +42,6 @@ const RightPanel = styled.div`
   color: white;
   overflow: hidden;
 
-  /* Glass effect en todo el panel */
   &::before {
     content: "";
     position: absolute;
@@ -97,7 +92,6 @@ const LogoSubtitle = styled.p`
   font-weight: 500;
 `;
 
-// Tarjeta del formulario
 const Card = styled.div`
   width: 100%;
   max-width: 400px;
@@ -166,7 +160,6 @@ const Message = styled.p`
   margin-top: 10px;
 `;
 
-// 🔹 Componente principal
 const Login = () => {
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
@@ -195,7 +188,19 @@ const Login = () => {
       }
 
       const data = await response.json();
-      localStorage.setItem("usuario", JSON.stringify(data));
+
+      // GUARDAR USUARIO COMPLETO
+      localStorage.setItem(
+        "usuario",
+        JSON.stringify({
+          id: data.id,
+          username: data.username,
+          nombre: data.nombre,
+          empleadoId: data.empleado?.id || null,
+          roles: data.empleado?.roles?.map((r) => r.nombre) || [],
+        })
+      );
+
       navigate("/home");
     } catch (error) {
       console.error(error);
@@ -205,10 +210,10 @@ const Login = () => {
 
   return (
     <Container>
-      {/* Panel izquierdo: formulario */}
       <LeftPanel>
         <Card>
           <Title>Inicio de Sesión</Title>
+
           <form onSubmit={handleLogin}>
             <Label>Usuario:</Label>
             <Input
@@ -232,7 +237,6 @@ const Login = () => {
         </Card>
       </LeftPanel>
 
-      {/* Panel derecho con fondo glass completo */}
       <RightPanel>
         <LogoContainer>
           <LogoImg src={logoColegio} alt="logo-colegio" />

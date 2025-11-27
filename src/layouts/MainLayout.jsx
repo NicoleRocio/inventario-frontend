@@ -283,13 +283,14 @@ const MainLayout = () => {
             <div>
               <span>{usuario?.nombre}</span><br />
               <span style={{ fontSize: "0.75rem", opacity: 0.9 }}>
-                {usuario?.empleado?.roles[0]?.nombre}
+                {usuario?.roles?.[0] || "Sin rol"}
               </span>
             </div>
             <UserIcon>
               <FaUserCircle />
             </UserIcon>
           </UserBox>
+
 
           <UserDropdown open={dropdownOpen}>
             <DropdownItem>Perfil</DropdownItem>

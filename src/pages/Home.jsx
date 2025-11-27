@@ -66,10 +66,8 @@ const Home = () => {
     return <p style={{ padding: "30px" }}>Cargando usuario...</p>;
   }
 
-  const rol =
-    typeof usuario?.empleado?.roles?.[0]?.nombre === "object"
-      ? JSON.stringify(usuario.empleado.roles[0].nombre)
-      : usuario?.empleado?.roles?.[0]?.nombre || "Sin rol";
+  const rol = usuario?.empleado?.roles?.[0]?.nombre || "Sin rol";
+
 
   return (
     <Container>

@@ -1,8 +1,11 @@
 import { useContext, useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { CartContext } from "../context/CartContext";
-import { FaTrash, FaCheckCircle, FaClock } from "react-icons/fa";
-import { crearPedido, getPedidos } from "../service/pedidoService";
+import { FaTrash, FaCheckCircle } from "react-icons/fa";
+import {
+  crearPedido,
+  getPedidosPorUsuario,
+} from "../service/pedidoService.js";
 
 /* Animación */
 const fadeIn = keyframes`
@@ -11,7 +14,7 @@ const fadeIn = keyframes`
 `;
 
 /* --------------------------------------------------------
-   CONTENEDOR PRINCIPAL
+   ESTILOS (NO CAMBIA NADA)
 -------------------------------------------------------- */
 
 const Contenedor = styled.div`
@@ -20,10 +23,6 @@ const Contenedor = styled.div`
   min-height: 100vh;
 `;
 
-/* --------------------------------------------------------
-   TÍTULO
--------------------------------------------------------- */
-
 const Titulo = styled.h2`
   color: #2F4F5F;
   text-align: center;
@@ -31,10 +30,6 @@ const Titulo = styled.h2`
   margin-bottom: 20px;
   font-size: 1.6rem;
 `;
-
-/* --------------------------------------------------------
-   LISTA CARRITO
--------------------------------------------------------- */
 
 const ListaPedidos = styled.div`
   display: flex;
@@ -99,10 +94,6 @@ const Toast = styled.div`
   font-weight: 600;
 `;
 
-/* --------------------------------------------------------
-   HISTORIAL - TABLA PROFESIONAL
--------------------------------------------------------- */
-
 const TablaWrapper = styled.div`
   margin-top: 35px;
   max-width: 900px;
@@ -150,7 +141,6 @@ const BadgeEstado = styled.span`
     estado === "Atendido" ? "#1C7C3E" : "#8A6D00"};
 `;
 
-/* Cliente */
 const InputCliente = styled.input`
   display: block;
   margin: 0 auto 20px;
@@ -165,33 +155,37 @@ const InputCliente = styled.input`
 `;
 
 /* --------------------------------------------------------
-   COMPONENTE PRINCIPAL
+   COMPONENTE PRINCIPAL — VERSIÓN POR ID DE USUARIO
 -------------------------------------------------------- */
 
 const MisPedidos = () => {
   const { cartItems, removeFromCart, clearCart } = useContext(CartContext);
   const [mostrarToast, setMostrarToast] = useState(false);
   const [historial, setHistorial] = useState([]);
-  const [cliente, setCliente] = useState("");
+  const [usuario, setUsuario] = useState(null);
 
+  // 🔵 Cargar usuario logueado
   useEffect(() => {
-    cargarPedidos();
+    const user = JSON.parse(localStorage.getItem("usuario"));
+    if (user) setUsuario(user);
   }, []);
 
-  const cargarPedidos = async () => {
+  // 🔵 Cargar historial del usuario
+  useEffect(() => {
+    if (!usuario) return;
+    cargarPedidosUsuario();
+  }, [usuario]);
+
+  const cargarPedidosUsuario = async () => {
     try {
-      const data = await getPedidos();
+      const data = await getPedidosPorUsuario(usuario.id);
       setHistorial(data);
     } catch (e) {
-      console.error("Error cargando pedidos:", e);
+      console.error("Error cargando pedidos del usuario:", e);
     }
   };
 
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("usuario"));
-    if (user) setCliente(user.nombre);
-  }, []);
-
+  // 🔵 Enviar pedido con usuario_id
   const handleEnviarPedido = async () => {
     if (cartItems.length === 0) {
       alert("No hay productos en el carrito");
@@ -199,7 +193,7 @@ const MisPedidos = () => {
     }
 
     const nuevoPedido = {
-      cliente,
+      usuario: { id: usuario.id },
       estado: "En espera",
       detalles: cartItems.map((item) => ({
         producto: { id: item.id },
@@ -211,8 +205,9 @@ const MisPedidos = () => {
       await crearPedido(nuevoPedido);
       setMostrarToast(true);
       setTimeout(() => setMostrarToast(false), 2500);
+
       clearCart();
-      cargarPedidos();
+      cargarPedidosUsuario();
     } catch (e) {
       alert("Error enviando el pedido");
     }
@@ -222,7 +217,9 @@ const MisPedidos = () => {
     <Contenedor>
       <Titulo>Mis Pedidos</Titulo>
 
-      <InputCliente value={cliente} readOnly />
+      {usuario && (
+        <InputCliente value={usuario.nombre} readOnly />
+      )}
 
       {/* CARRITO */}
       {cartItems.length === 0 ? (
@@ -253,7 +250,7 @@ const MisPedidos = () => {
         </>
       )}
 
-      {/* HISTORIAL EN TABLA */}
+      {/* HISTORIAL */}
       {historial.length > 0 && (
         <TablaWrapper>
           <h3 style={{ textAlign: "center", marginBottom: "20px", color: "#2F4F5F" }}>
@@ -264,7 +261,6 @@ const MisPedidos = () => {
             <thead>
               <tr>
                 <Th>Fecha</Th>
-                <Th>Cliente</Th>
                 <Th>Estado</Th>
                 <Th>Detalles</Th>
               </tr>
@@ -274,12 +270,13 @@ const MisPedidos = () => {
               {historial.map((pedido) => (
                 <Fila key={pedido.id}>
                   <Td>{new Date(pedido.fecha).toLocaleString()}</Td>
-                  <Td>{pedido.cliente}</Td>
+
                   <Td>
                     <BadgeEstado estado={pedido.estado}>
                       {pedido.estado}
                     </BadgeEstado>
                   </Td>
+
                   <Td>
                     {pedido.detalles
                       .map(

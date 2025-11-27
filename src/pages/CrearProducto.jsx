@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { crearProducto } from "../service/productoService";
+import { crearProducto } from "../service/productoService.js";
 
 /* --------------------------------------------------------
    ANIMACIÓN
