@@ -66,7 +66,7 @@ const Home = () => {
     return <p style={{ padding: "30px" }}>Cargando usuario...</p>;
   }
 
-  const rol = usuario?.empleado?.roles?.[0]?.nombre || "Sin rol";
+  const rol = usuario?.roles?.[0] || "Sin rol";
 
 
   return (
