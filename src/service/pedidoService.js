@@ -45,3 +45,11 @@ export const actualizarEstadoPedido = async (id, estado) => {
   return await response.text();
 };
 
+// 🆕 Productos asignados (pedidos atendidos)
+export const getProductosAsignados = async (usuarioId) => {
+  const response = await fetch(`${API_URL}/asignados/${usuarioId}`);
+  if (!response.ok) throw new Error("Error al obtener productos asignados");
+  return await response.json();
+};
+
+

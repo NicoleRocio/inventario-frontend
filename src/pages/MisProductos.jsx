@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { getProductosAsignados } from "../service/pedidoService";
+
+const usuarioLogueado = JSON.parse(localStorage.getItem("usuario"));
 
 const Container = styled.div`
   width: 100%;
@@ -55,54 +58,66 @@ const ImgProducto = styled.img`
 `;
 
 export default function MisProductos() {
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // TEMPORAL: datos de prueba (incluimos imágenes)
-  const [productos, setProductos] = useState([
-    {
-      nombre: "Laptop Lenovo ThinkPad",
-      fecha: "2025-11-15",
-      cantidad: 1,
-      estado: "Asignado",
-      imagen: "https://cdn-icons-png.flaticon.com/512/270/270798.png"
-    },
-    {
-      nombre: "Monitor Samsung 24\"",
-      fecha: "2025-11-08",
-      cantidad: 1,
-      estado: "Asignado",
-      imagen: "https://cdn-icons-png.flaticon.com/512/1998/1998671.png"
-    }
-  ]);
+  useEffect(() => {
+
+    if (!usuarioLogueado) return;
+
+    const cargarProductosAsignados = async () => {
+      try {
+        const data = await getProductosAsignados(usuarioLogueado.id);
+        setProductos(data);
+      } catch (error) {
+        console.error("Error al cargar productos asignados", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarProductosAsignados();
+
+  }, []);
+
+  if (loading) return <p style={{ padding: "30px" }}>Cargando productos asignados...</p>;
 
   return (
     <Container>
       <Title>Mis productos asignados</Title>
 
-      <Table>
-        <thead>
-          <tr>
-            <Th>Imagen</Th>
-            <Th>Producto</Th>
-            <Th>Fecha entrega</Th>
-            <Th>Cantidad</Th>
-            <Th>Estado</Th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {productos.map((p, index) => (
-            <tr key={index}>
-              <Td>
-                <ImgProducto src={p.imagen} alt={p.nombre} />
-              </Td>
-              <Td>{p.nombre}</Td>
-              <Td>{p.fecha}</Td>
-              <Td>{p.cantidad}</Td>
-              <Td><Estado>{p.estado}</Estado></Td>
+      {productos.length === 0 ? (
+        <p style={{ padding: "20px" }}>No tienes productos asignados todavía.</p>
+      ) : (
+        <Table>
+          <thead>
+            <tr>
+              <Th>Imagen</Th>
+              <Th>Producto</Th>
+              <Th>Fecha entrega</Th>
+              <Th>Cantidad</Th>
+              <Th>Estado</Th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+
+          <tbody>
+            {productos.map((p, index) => (
+              <tr key={index}>
+                <Td>
+                  <ImgProducto 
+                    src={`http://localhost:8080/uploads/imagenes/${p.imagen}`} 
+                    alt={p.nombreProducto} 
+                  />
+                </Td>
+                <Td>{p.nombreProducto}</Td>
+                <Td>{p.fecha?.split("T")[0]}</Td>
+                <Td>{p.cantidad}</Td>
+                <Td><Estado>{p.estado}</Estado></Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
     </Container>
   );
 }

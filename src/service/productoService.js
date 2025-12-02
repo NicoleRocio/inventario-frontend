@@ -26,7 +26,7 @@ export const crearProducto = async (producto, imagen) => {
     headers: {
       "Content-Type": "multipart/form-data",
     },
-  });
+  }); 
 
   return response.data;
 };

@@ -1,38 +1,46 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
+import {
+  crearIncidencia,
+  getIncidenciasPorUsuario,
+} from "../service/incidenciaService";
+import { getProductosAsignados } from "../service/pedidoService";
 
-/* Animación */
+/* ---------------------------------------------------
+   ANIMACIÓN
+--------------------------------------------------- */
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
-/* CONTENEDOR */
+/* ---------------------------------------------------
+   ESTILOS GENERALES
+--------------------------------------------------- */
 const Contenedor = styled.div`
   padding: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 40px;
-  background: #E4F3FA;
+  background: #e4f3fa;
   min-height: 100vh;
   animation: ${fadeIn} 0.4s ease;
 `;
 
-/* FORMULARIO */
 const Formulario = styled.div`
   background: white;
   width: 100%;
   max-width: 650px;
   padding: 35px;
   border-radius: 18px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
 `;
 
 const Titulo = styled.h2`
   text-align: center;
   margin-bottom: 20px;
-  color: #2F4F5F;
+  color: #2f4f5f;
   font-size: 1.6rem;
   font-weight: 600;
 `;
@@ -44,7 +52,7 @@ const Campo = styled.div`
 `;
 
 const Label = styled.label`
-  color: #2F4F5F;
+  color: #2f4f5f;
   font-weight: 600;
   margin-bottom: 6px;
 `;
@@ -52,36 +60,36 @@ const Label = styled.label`
 const Input = styled.input`
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1.5px solid #A7D4E6;
+  border: 1.5px solid #a7d4e6;
   background: white;
   font-size: 1rem;
   outline: none;
 
   &:focus {
-    border-color: #7EC4DD;
-    box-shadow: 0 0 6px rgba(126,196,221,0.35);
+    border-color: #7ec4dd;
+    box-shadow: 0 0 6px rgba(126, 196, 221, 0.35);
   }
 `;
 
 const TextArea = styled.textarea`
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1.5px solid #A7D4E6;
+  border: 1.5px solid #a7d4e6;
   background: white;
   min-height: 130px;
   outline: none;
   resize: none;
 
   &:focus {
-    border-color: #7EC4DD;
-    box-shadow: 0 0 6px rgba(126,196,221,0.35);
+    border-color: #7ec4dd;
+    box-shadow: 0 0 6px rgba(126, 196, 221, 0.35);
   }
 `;
 
 const Boton = styled.button`
   width: 100%;
   padding: 14px;
-  background: #7EC4DD;
+  background: #7ec4dd;
   color: white;
   border-radius: 12px;
   font-size: 1rem;
@@ -98,12 +106,13 @@ const Boton = styled.button`
 const MensajeExito = styled.p`
   margin-top: 15px;
   text-align: center;
-  color: #1C7C3E;
+  color: #1c7c3e;
   font-weight: 600;
 `;
 
-/* ---- SELECT PERSONALIZADO ---- */
-
+/* ---------------------------------------------------
+   SELECT PERSONALIZADO
+--------------------------------------------------- */
 const SelectBox = styled.div`
   position: relative;
 `;
@@ -111,7 +120,7 @@ const SelectBox = styled.div`
 const SelectVisual = styled.div`
   padding: 12px 14px;
   border-radius: 10px;
-  border: 1.5px solid #A7D4E6;
+  border: 1.5px solid #a7d4e6;
   background: white;
   cursor: pointer;
   display: flex;
@@ -125,9 +134,9 @@ const OpcionLista = styled.div`
   left: 0;
   width: 100%;
   background: white;
-  border: 1.5px solid #A7D4E6;
+  border: 1.5px solid #a7d4e6;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 10;
 `;
 
@@ -139,7 +148,7 @@ const Opcion = styled.div`
   cursor: pointer;
 
   &:hover {
-    background: #E4F3FA;
+    background: #e4f3fa;
   }
 `;
 
@@ -149,14 +158,16 @@ const ImgProducto = styled.img`
   object-fit: contain;
 `;
 
-/* ---- HISTORIAL ---- */
+/* ---------------------------------------------------
+   HISTORIAL
+--------------------------------------------------- */
 const Historial = styled.div`
   background: white;
   padding: 30px;
   width: 100%;
   max-width: 900px;
   border-radius: 18px;
-  box-shadow: 0 4px 18px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
 `;
 
 const Tabla = styled.table`
@@ -166,18 +177,20 @@ const Tabla = styled.table`
 `;
 
 const Th = styled.th`
-  background: #7EC4DD;
+  background: #7ec4dd;
   color: white;
   padding: 12px;
 `;
 
 const Tr = styled.tr`
-  &:nth-child(even) { background: #F7FBFC; }
+  &:nth-child(even) {
+    background: #f7fbfc;
+  }
 `;
 
 const Td = styled.td`
   padding: 12px;
-  border-bottom: 1px solid #E7EEF1;
+  border-bottom: 1px solid #e7eef1;
 `;
 
 const ImgMini = styled.img`
@@ -194,40 +207,23 @@ const Estado = styled.span`
   border-radius: 6px;
   font-weight: 600;
   background-color: ${({ estado }) =>
-    estado === "Atendido" ? "rgba(40,167,69,0.12)" : "rgba(211,158,0,0.20)"};
+    estado === "Atendido"
+      ? "rgba(40,167,69,0.12)"
+      : "rgba(211,158,0,0.20)"};
   color: ${({ estado }) =>
-    estado === "Atendido" ? "#1C7C3E" : "#8A6D00"};
+    estado === "Atendido" ? "#1c7c3e" : "#8a6d00"};
 `;
 
-
-
-
-
-/* ----------------------------------
+/* ---------------------------------------------------
    COMPONENTE PRINCIPAL
----------------------------------- */
-
+--------------------------------------------------- */
 const GenerarIncidencia = () => {
   const [usuarioLogueado, setUsuarioLogueado] = useState(null);
+  const [productosAsignados, setProductosAsignados] = useState([]);
   const [incidencias, setIncidencias] = useState([]);
-  const [mensaje, setMensaje] = useState("");
-
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [mostrarOpciones, setMostrarOpciones] = useState(false);
-
-  /* Productos asignados de ejemplo */
-  const productosAsignados = [
-    {
-      id: 1,
-      nombre: "Laptop Lenovo ThinkPad",
-      imagen: "https://cdn-icons-png.flaticon.com/512/270/270798.png"
-    },
-    {
-      id: 2,
-      nombre: "Monitor Samsung 24\"",
-      imagen: "https://cdn-icons-png.flaticon.com/512/1998/1998671.png"
-    }
-  ];
+  const [mensaje, setMensaje] = useState("");
 
   const [formData, setFormData] = useState({
     usuario: "",
@@ -236,7 +232,21 @@ const GenerarIncidencia = () => {
     estado: "Pendiente",
   });
 
-  /* Cargar usuario */
+  const selectRef = useRef(null);
+
+  /* Cerrar select cuando se hace click afuera */
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (selectRef.current && !selectRef.current.contains(event.target)) {
+        setMostrarOpciones(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  /* CARGAR USUARIO */
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("usuario"));
     if (user) {
@@ -245,50 +255,88 @@ const GenerarIncidencia = () => {
     }
   }, []);
 
-  /* Cargar historial */
+  /* CARGAR PRODUCTOS ASIGNADOS */
   useEffect(() => {
     if (!usuarioLogueado) return;
 
-    const todas = JSON.parse(localStorage.getItem("incidencias")) || [];
-    const filtradas = todas.filter((i) => i.usuario === usuarioLogueado.nombre);
-    setIncidencias(filtradas);
-  }, [usuarioLogueado]);
+    const cargar = async () => {
+      try {
+        const data = await getProductosAsignados(usuarioLogueado.id);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+        const adaptados = data.map((p) => ({
+          id: p.productoId,
+          nombre: p.nombreProducto,
+          imagen: `http://localhost:8080/uploads/imagenes/${p.imagen}`,
+          cantidad: p.cantidad,
+        }));
 
-    const nueva = {
-      id: Date.now(),
-      ...formData,
-      producto: productoSeleccionado?.nombre || "",
-      imagenProducto: productoSeleccionado?.imagen || "",
-      fecha: new Date().toLocaleDateString(),
-      hora: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        setProductosAsignados(adaptados);
+      } catch (err) {
+        console.log("Error cargando productos asignados", err);
+      }
     };
 
-    const nuevas = [...incidencias, nueva];
-    setIncidencias(nuevas);
+    cargar();
+  }, [usuarioLogueado]);
 
-    const todas = JSON.parse(localStorage.getItem("incidencias")) || [];
-    todas.push(nueva);
-    localStorage.setItem("incidencias", JSON.stringify(todas));
+  /* CARGAR HISTORIAL REAL */
+  useEffect(() => {
+    if (!usuarioLogueado) return;
 
-    setMensaje("✅ Incidencia registrada correctamente.");
-    setFormData({ ...formData, area: "", descripcion: "" });
-    setProductoSeleccionado(null);
+    const cargarHistorial = async () => {
+      try {
+        const data = await getIncidenciasPorUsuario(usuarioLogueado.id);
+        setIncidencias(data);
+      } catch (e) {
+        console.log("Error cargando historial de incidencias", e);
+      }
+    };
+
+    cargarHistorial();
+  }, [usuarioLogueado]);
+
+  /* ENVIAR INCIDENCIA */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await crearIncidencia({
+        usuarioId: usuarioLogueado.id,
+        productoId: productoSeleccionado?.id,
+        nombreProducto: productoSeleccionado?.nombre,
+        imagenProducto: productoSeleccionado?.imagen.replace(
+          "http://localhost:8080/uploads/imagenes/",
+          ""
+        ),
+        area: formData.area,
+        descripcion: formData.descripcion,
+      });
+
+      setMensaje("✅ Incidencia registrada correctamente.");
+      setFormData((prev) => ({ ...prev, area: "", descripcion: "" }));
+      setProductoSeleccionado(null);
+
+      // Recargar historial real
+      const data =
+        await getIncidenciasPorUsuario(usuarioLogueado.id);
+      setIncidencias(data);
+    } catch (err) {
+      console.log("Error registrando incidencia", err);
+      setMensaje("❌ Error al registrar la incidencia.");
+    }
 
     setTimeout(() => setMensaje(""), 3000);
   };
 
+  /* ---------------------------------------------------
+     RENDER
+  --------------------------------------------------- */
   return (
     <Contenedor>
-
-      {/* FORMULARIO */}
       <Formulario>
         <Titulo>Registrar Incidencia</Titulo>
 
         <form onSubmit={handleSubmit}>
-          
           <Campo>
             <Label>Usuario:</Label>
             <Input type="text" value={formData.usuario} disabled />
@@ -298,23 +346,38 @@ const GenerarIncidencia = () => {
             <Label>Área:</Label>
             <Input
               type="text"
-              name="area"
               value={formData.area}
-              onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  area: e.target.value,
+                })
+              }
               placeholder="Ejemplo: Administración"
               required
             />
           </Campo>
 
-          {/* SELECT PERSONALIZADO */}
+          {/* SELECT PRODUCTO */}
           <Campo>
             <Label>Producto afectado:</Label>
 
-            <SelectBox>
-              <SelectVisual onClick={() => setMostrarOpciones(!mostrarOpciones)}>
+            <SelectBox ref={selectRef}>
+              <SelectVisual
+                onClick={() => setMostrarOpciones(!mostrarOpciones)}
+              >
                 {productoSeleccionado ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <ImgProducto src={productoSeleccionado.imagen} alt="" />
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "12px",
+                      alignItems: "center",
+                    }}
+                  >
+                    <ImgProducto
+                      src={productoSeleccionado.imagen}
+                      alt=""
+                    />
                     {productoSeleccionado.nombre}
                   </div>
                 ) : (
@@ -344,9 +407,13 @@ const GenerarIncidencia = () => {
           <Campo>
             <Label>Descripción:</Label>
             <TextArea
-              name="descripcion"
               value={formData.descripcion}
-              onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  descripcion: e.target.value,
+                })
+              }
               placeholder="Describe el problema..."
               required
             />
@@ -381,9 +448,12 @@ const GenerarIncidencia = () => {
             <tbody>
               {incidencias.map((i) => (
                 <Tr key={i.id}>
-                  <Td>{i.producto}</Td>
+                  <Td>{i.nombreProducto}</Td>
                   <Td>
-                    <ImgMini src={i.imagenProducto} alt="" />
+                    <ImgMini
+                      src={`http://localhost:8080/uploads/imagenes/${i.imagenProducto}`}
+                      alt=""
+                    />
                   </Td>
                   <Td>{i.area}</Td>
                   <Td>{i.descripcion}</Td>
@@ -398,7 +468,6 @@ const GenerarIncidencia = () => {
           </Tabla>
         )}
       </Historial>
-
     </Contenedor>
   );
 };
