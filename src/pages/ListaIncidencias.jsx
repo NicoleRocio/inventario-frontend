@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import * as XLSX from "xlsx";
+import { getIncidencias, actualizarEstado, eliminarIncidencia } from "../service/incidenciaService";
 
 /* -----------------------------
    ESTILOS
@@ -18,10 +19,8 @@ const Titulo = styled.h2`
   margin-bottom: 30px;
   font-weight: 600;
   font-size: 1.6rem;
-  
 `;
 
-/* WRAPPER QUE UNE FILTROS + EXPORTAR */
 const FiltrosWrapper = styled.div`
   width: 100%;
   max-width: 1100px;
@@ -33,7 +32,6 @@ const FiltrosWrapper = styled.div`
   gap: 15px;
 `;
 
-/* Caja de los dos filtros */
 const Filtros = styled.div`
   display: flex;
   gap: 12px;
@@ -46,14 +44,12 @@ const InputFiltro = styled.input`
   border-radius: 10px;
   font-size: 1rem;
   outline: none;
-
   &:focus {
     border-color: #7EC4DD;
     box-shadow: 0 0 5px rgba(126, 196, 221, 0.35);
   }
 `;
 
-/* BOTÓN EXPORTAR */
 const BotonExportar = styled.button`
   padding: 12px 18px;
   background-color: #2F4F5F;
@@ -63,28 +59,24 @@ const BotonExportar = styled.button`
   font-weight: 600;
   cursor: pointer;
   transition: 0.25s;
-
   &:hover {
     background-color: #22323f;
     transform: translateY(-2px);
   }
 `;
 
-/* TABLA */
 const Tabla = styled.table`
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
   border-collapse: collapse;
   background-color: white;
-  /*border-radius: 0px;*/
-  overflow: hidden;
-  box-shadow: 0 4px 14px rgba(247, 240, 240, 0.09);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.09);
 `;
 
 const Encabezado = styled.th`
   background: #7EC4DD;
-  color: #F7FBFC;
+  color: white;
   padding: 14px;
   font-size: 0.95rem;
   font-weight: 700;
@@ -104,41 +96,28 @@ const Celda = styled.td`
   color: #2F4F5F;
 `;
 
-/* BOTONES DE ACCIÓN */
 const BotonAccion = styled.button`
   padding: 8px 14px;
   border-radius: 8px;
   border: none;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.25s;
+  transition: 0.2s;
   font-size: 0.82rem;
   margin-right: 8px;
 
   ${({ tipo }) =>
     tipo === "atendido"
       ? `
-        background: #1C7C3E;
-        color: white;
-        &:hover { background: #155f2f; }
-      `
-      : tipo === "pendiente"
-      ? `
-        background: #7EC4DD;
-        color: #1E1E2F;
-        &:hover { background: #68B1C9; }
-      `
-      : tipo === "eliminar"
-      ? `
-        background: #C03737;
-        color: white;
-        &:hover { background: #a92f2f; }
-      `
+    background: #1C7C3E;
+    color: white;
+    &:hover { background: #155f2f; }
+  `
       : `
-        background: #2F4F5F;
-        color: white;
-        &:hover { background: #22323f; }
-      `}
+    background: #7EC4DD;
+    color: #1E1E2F;
+    &:hover { background: #68B1C9; }
+  `}
 `;
 
 /* -----------------------------
@@ -150,25 +129,52 @@ const ListaIncidencias = () => {
   const [filtro, setFiltro] = useState("");
   const [fechaFiltro, setFechaFiltro] = useState("");
 
+  /* 🔵 Cargar incidencias reales desde backend */
   useEffect(() => {
-    const guardadas = JSON.parse(localStorage.getItem("incidencias")) || [];
-    setIncidencias(guardadas);
+    const cargar = async () => {
+      try {
+        const data = await getIncidencias();
+        setIncidencias(data);
+      } catch (err) {
+        console.log("Error cargando incidencias", err);
+      }
+    };
+
+    cargar();
   }, []);
 
-  const marcarComoAtendido = (index) => {
-    const nuevas = [...incidencias];
-    nuevas[index].estado =
-      nuevas[index].estado === "Atendido" ? "Pendiente" : "Atendido";
-    setIncidencias(nuevas);
-    localStorage.setItem("incidencias", JSON.stringify(nuevas));
+  /* 🔵 Cambiar estado */
+  const marcarComoAtendido = async (id, estadoActual) => {
+    const nuevoEstado = estadoActual === "Atendido" ? "Pendiente" : "Atendido";
+
+    try {
+      const actualizada = await actualizarEstado(id, nuevoEstado);
+
+      // Actualizar en tabla sin recargar
+      setIncidencias((prev) =>
+        prev.map((i) => (i.id === id ? { ...i, estado: actualizada.estado } : i))
+      );
+    } catch (err) {
+      console.log("Error actualizando estado", err);
+    }
   };
 
-  const eliminarIncidencia = (index) => {
-    const nuevas = incidencias.filter((_, i) => i !== index);
-    setIncidencias(nuevas);
-    localStorage.setItem("incidencias", JSON.stringify(nuevas));
+  const eliminar = async (id) => {
+    if (!confirm("¿Seguro de eliminar esta incidencia?")) return;
+
+    try {
+      await eliminarIncidencia(id);
+
+      // Actualizar la tabla quitando la incidencia eliminada
+      setIncidencias((prev) => prev.filter((i) => i.id !== id));
+
+    } catch (err) {
+      console.log("Error eliminando incidencia", err);
+    }
   };
 
+
+  /* 🔵 Exportar Excel */
   const exportarExcel = () => {
     const hoja = XLSX.utils.json_to_sheet(incidencias);
     const libro = XLSX.utils.book_new();
@@ -176,19 +182,31 @@ const ListaIncidencias = () => {
     XLSX.writeFile(libro, "Reporte_Incidencias.xlsx");
   };
 
-  const filtradas = incidencias.filter(
-    (i) =>
-      i.usuario.toLowerCase().includes(filtro.toLowerCase()) &&
-      (fechaFiltro ? i.fecha === fechaFiltro : true)
-  );
+  /* 🔵 Filtrar */
+  const filtradas = incidencias.filter((i) => {
+  const coincideUsuario = i.usuario.nombre
+    .toLowerCase()
+    .includes(filtro.toLowerCase());
+
+  let coincideFecha = true;
+
+  if (fechaFiltro) {
+    // Convertir yyyy-mm-dd → dd/mm/yyyy
+    const [yyyy, mm, dd] = fechaFiltro.split("-");
+    const fechaFormateada = `${dd}/${mm}/${yyyy}`;
+    coincideFecha = i.fecha === fechaFormateada;
+  }
+
+  return coincideUsuario && coincideFecha;
+});
+
 
   return (
     <Contenedor>
-      <Titulo> Lista de Incidencias</Titulo>
+      <Titulo>Lista de Incidencias</Titulo>
 
-      {/* FILTROS Y EXPORTAR */}
+      {/* FILTROS + EXPORTAR */}
       <FiltrosWrapper>
-
         <Filtros>
           <InputFiltro
             type="text"
@@ -196,6 +214,7 @@ const ListaIncidencias = () => {
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
           />
+
           <InputFiltro
             type="date"
             value={fechaFiltro}
@@ -203,10 +222,7 @@ const ListaIncidencias = () => {
           />
         </Filtros>
 
-        <BotonExportar onClick={exportarExcel}>
-          📊 Exportar Excel
-        </BotonExportar>
-
+        <BotonExportar onClick={exportarExcel}>📊 Exportar Excel</BotonExportar>
       </FiltrosWrapper>
 
       {/* TABLA */}
@@ -224,9 +240,9 @@ const ListaIncidencias = () => {
         </thead>
 
         <tbody>
-          {filtradas.map((i, index) => (
-            <Fila key={index}>
-              <Celda>{i.usuario}</Celda>
+          {filtradas.map((i) => (
+            <Fila key={i.id}>
+              <Celda>{i.usuario.nombre}</Celda>
               <Celda>{i.area}</Celda>
               <Celda>{i.descripcion}</Celda>
               <Celda>{i.fecha}</Celda>
@@ -236,18 +252,20 @@ const ListaIncidencias = () => {
               <Celda>
                 <BotonAccion
                   tipo={i.estado === "Atendido" ? "pendiente" : "atendido"}
-                  onClick={() => marcarComoAtendido(index)}
+                  onClick={() => marcarComoAtendido(i.id, i.estado)}
                 >
                   {i.estado === "Atendido" ? "Pendiente" : "Atendido"}
                 </BotonAccion>
 
                 <BotonAccion
                   tipo="eliminar"
-                  onClick={() => eliminarIncidencia(index)}
+                  onClick={() => eliminar(i.id)}
+                  style={{ background: "#C03737", color: "white" }}
                 >
                   Eliminar
                 </BotonAccion>
               </Celda>
+
             </Fila>
           ))}
         </tbody>

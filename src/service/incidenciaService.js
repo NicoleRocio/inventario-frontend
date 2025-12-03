@@ -27,3 +27,42 @@ export const getIncidenciasPorUsuario = async (usuarioId) => {
 
   return await response.json();
 };
+
+// 🟦 Obtener TODAS las incidencias (para administrador)
+export const getIncidencias = async () => {
+  const response = await fetch(API_URL);
+
+  if (!response.ok) {
+    throw new Error("Error al obtener todas las incidencias");
+  }
+
+  return await response.json();
+};
+
+// 🟦 Actualizar estado de una incidencia
+export const actualizarEstado = async (id, estado) => {
+  const response = await fetch(`${API_URL}/${id}/estado`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ estado }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al actualizar estado");
+  }
+
+  return await response.json();
+};
+
+// 🟦 (Opcional) Eliminar incidencia si lo agregas en backend luego
+export const eliminarIncidencia = async (id) => {
+  const response = await fetch(`${API_URL}/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al eliminar incidencia");
+  }
+
+  return true;
+};
