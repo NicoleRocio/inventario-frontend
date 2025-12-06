@@ -43,4 +43,23 @@ export const loginUsuario = async (username, password) => {
   } catch (error) {
     throw new Error(error.message || "Error al conectar con el servidor");
   }
+
 };
+
+
+
+// ... (tus otras funciones) ...
+
+// 🧩 NUEVO: Obtener resumen para el Dashboard
+export const getResumenUsuario = async (id) => {
+  try {
+    // Llama al endpoint que acabamos de crear en Java
+    const response = await fetch(`${API_URL}/${id}/dashboard`);
+    if (!response.ok) throw new Error("Error al obtener datos del dashboard");
+    return await response.json(); 
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+

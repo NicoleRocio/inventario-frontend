@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import * as XLSX from "xlsx";
+import Swal from "sweetalert2";
 import { getIncidencias, actualizarEstado, eliminarIncidencia } from "../service/incidenciaService";
 
 /* -----------------------------
@@ -128,6 +129,9 @@ const ListaIncidencias = () => {
   const [incidencias, setIncidencias] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [fechaFiltro, setFechaFiltro] = useState("");
+  const [paginaActual, setPaginaActual] = useState(1);
+  const incidenciasPorPagina = 5; // Puedes cambiarlo a 10 o 15
+
 
   /* 🔵 Cargar incidencias reales desde backend */
   useEffect(() => {
@@ -160,18 +164,39 @@ const ListaIncidencias = () => {
   };
 
   const eliminar = async (id) => {
-    if (!confirm("¿Seguro de eliminar esta incidencia?")) return;
+    Swal.fire({
+      title: "¿Eliminar incidencia?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#C03737",
+      cancelButtonColor: "#7EC4DD",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
 
-    try {
-      await eliminarIncidencia(id);
+        try {
+          await eliminarIncidencia(id);
 
-      // Actualizar la tabla quitando la incidencia eliminada
-      setIncidencias((prev) => prev.filter((i) => i.id !== id));
+          setIncidencias(prev => prev.filter(i => i.id !== id));
 
-    } catch (err) {
-      console.log("Error eliminando incidencia", err);
-    }
+          Swal.fire({
+            title: "Eliminado",
+            text: "La incidencia fue eliminada correctamente.",
+            icon: "success",
+            timer: 1800,
+            showConfirmButton: false
+          });
+
+        } catch (err) {
+          Swal.fire("Error", "No se pudo eliminar la incidencia.", "error");
+          console.log(err);
+        }
+      }
+    });
   };
+
 
 
   /* 🔵 Exportar Excel */
@@ -184,21 +209,31 @@ const ListaIncidencias = () => {
 
   /* 🔵 Filtrar */
   const filtradas = incidencias.filter((i) => {
-  const coincideUsuario = i.usuario.nombre
-    .toLowerCase()
-    .includes(filtro.toLowerCase());
+    const coincideUsuario = i.usuario.nombre
+      .toLowerCase()
+      .includes(filtro.toLowerCase());
 
-  let coincideFecha = true;
+    let coincideFecha = true;
 
-  if (fechaFiltro) {
-    // Convertir yyyy-mm-dd → dd/mm/yyyy
-    const [yyyy, mm, dd] = fechaFiltro.split("-");
-    const fechaFormateada = `${dd}/${mm}/${yyyy}`;
-    coincideFecha = i.fecha === fechaFormateada;
-  }
+    if (fechaFiltro) {
+      // Convertir yyyy-mm-dd → dd/mm/yyyy
+      const [yyyy, mm, dd] = fechaFiltro.split("-");
+      const fechaFormateada = `${dd}/${mm}/${yyyy}`;
+      coincideFecha = i.fecha === fechaFormateada;
+    }
 
-  return coincideUsuario && coincideFecha;
-});
+    return coincideUsuario && coincideFecha;
+  });
+  // Calcular índices
+  const indiceInicial = (paginaActual - 1) * incidenciasPorPagina;
+  const indiceFinal = indiceInicial + incidenciasPorPagina;
+
+  // Datos filtrados + paginados
+  const paginadas = filtradas.slice(indiceInicial, indiceFinal);
+
+  // Total de páginas
+  const totalPaginas = Math.ceil(filtradas.length / incidenciasPorPagina);
+
 
 
   return (
@@ -240,7 +275,7 @@ const ListaIncidencias = () => {
         </thead>
 
         <tbody>
-          {filtradas.map((i) => (
+          {paginadas.map((i) => (
             <Fila key={i.id}>
               <Celda>{i.usuario.nombre}</Celda>
               <Celda>{i.area}</Celda>
@@ -270,6 +305,86 @@ const ListaIncidencias = () => {
           ))}
         </tbody>
       </Tabla>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          marginTop: "25px",
+          gap: "12px"
+        }}
+      >
+        <button
+          disabled={paginaActual === 1}
+          onClick={() => setPaginaActual(paginaActual - 1)}
+          style={{
+            padding: "10px 18px",
+            background: paginaActual === 1 ? "#BFDCE6" : "#7EC4DD",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "600",
+            cursor: paginaActual === 1 ? "not-allowed" : "pointer",
+            color: "#2F4F5F",
+            transition: "0.25s",
+            boxShadow:
+              paginaActual === 1 ? "none" : "0 2px 6px rgba(0,0,0,0.15)"
+          }}
+          onMouseEnter={(e) => {
+            if (paginaActual > 1)
+              e.target.style.background = "#68B1C9";
+          }}
+          onMouseLeave={(e) => {
+            if (paginaActual > 1)
+              e.target.style.background = "#7EC4DD";
+          }}
+        >
+          Anterior
+        </button>
+
+        <span
+          style={{
+            fontSize: "1rem",
+            fontWeight: "600",
+            color: "#2F4F5F"
+          }}
+        >
+          Página {paginaActual} de {totalPaginas}
+        </span>
+
+        <button
+          disabled={paginaActual === totalPaginas}
+          onClick={() => setPaginaActual(paginaActual + 1)}
+          style={{
+            padding: "10px 18px",
+            background:
+              paginaActual === totalPaginas ? "#BFDCE6" : "#7EC4DD",
+            border: "none",
+            borderRadius: "8px",
+            fontWeight: "600",
+            cursor:
+              paginaActual === totalPaginas ? "not-allowed" : "pointer",
+            color: "#2F4F5F",
+            transition: "0.25s",
+            boxShadow:
+              paginaActual === totalPaginas
+                ? "none"
+                : "0 2px 6px rgba(0,0,0,0.15)"
+          }}
+          onMouseEnter={(e) => {
+            if (paginaActual < totalPaginas)
+              e.target.style.background = "#68B1C9";
+          }}
+          onMouseLeave={(e) => {
+            if (paginaActual < totalPaginas)
+              e.target.style.background = "#7EC4DD";
+          }}
+        >
+          Siguiente 
+        </button>
+      </div>
+
+
     </Contenedor>
   );
 };
