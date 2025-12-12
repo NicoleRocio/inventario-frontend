@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
-import {
-  crearIncidencia,
-  getIncidenciasPorUsuario,
-} from "../service/incidenciaService";
+import { useLocation } from "react-router-dom"; // 1. IMPORTANTE: Importar useLocation
+import { crearIncidencia, getIncidenciasPorUsuario, } from "../service/incidenciaService";
 import { getProductosAsignados } from "../service/pedidoService";
 
 /* ---------------------------------------------------
@@ -224,16 +222,34 @@ const GenerarIncidencia = () => {
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [mostrarOpciones, setMostrarOpciones] = useState(false);
   const [mensaje, setMensaje] = useState("");
-
+  const location = useLocation();
+  console.log("📍 Estado recibido:", location.state);
   const [formData, setFormData] = useState({
     usuario: "",
     area: "",
     descripcion: "",
     estado: "Pendiente",
   });
-
   const selectRef = useRef(null);
 
+  /*scroll a seccion del historial si viene de Home */
+  useEffect(() => {
+    // 1. Verificamos la orden
+    if (location.state?.irAlHistorial) {
+
+      // 2. Esperamos a que los datos carguen
+      setTimeout(() => {
+        const seccion = document.getElementById("historial-incidencias");
+
+        if (seccion) {
+          // scrollIntoView busca el contenedor correcto automáticamente.
+          // block: "start" pone el título de la tabla justo al inicio de la pantalla (arriba).
+          // behavior: "smooth" hace que deslice suave.
+          seccion.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 500);
+    }
+  }, [location, incidencias]);
   /* Cerrar select cuando se hace click afuera */
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -426,7 +442,7 @@ const GenerarIncidencia = () => {
       </Formulario>
 
       {/* HISTORIAL */}
-      <Historial>
+      <Historial id="historial-incidencias" style={{ marginTop: "5px", scrollMarginTop: "16px" }}>
         <Titulo>Historial de Incidencias</Titulo>
 
         {incidencias.length === 0 ? (

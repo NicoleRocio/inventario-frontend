@@ -49,7 +49,7 @@ const StatsGrid = styled.div`
   margin-bottom: 40px;
 `;
 
-const StatCard = styled.div`
+const StatCard = styled (Link)`
   background: white;
   padding: 25px;
   border-radius: 16px;
@@ -59,9 +59,13 @@ const StatCard = styled.div`
   gap: 20px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   border-left: 5px solid ${props => props.$color || "#7EC4DD"};
+  text-decoration: none; 
+  color: inherit;
+  cursor: pointer;
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    
   }
 `;
 
@@ -202,7 +206,7 @@ const Home = () => {
 
       <StatsGrid>
         {/* TARJETA 1: Mis Activos */}
-        <StatCard $color="#7EC4DD">
+        <StatCard to="/mis-productos" $color="#7EC4DD">
           <IconBox $bg="#e3f4fa" $color="#7EC4DD">
             <FaBoxOpen />
           </IconBox>
@@ -214,7 +218,7 @@ const Home = () => {
         </StatCard>
 
         {/* TARJETA 2: Incidencias */}
-        <StatCard $color="#f39c12">
+        <StatCard to="/generar-incidencia" state={{irAlHistorial:true}} $color="#f39c12">
           <IconBox $bg="#fef5e7" $color="#f39c12">
             <FaExclamationTriangle />
           </IconBox>
@@ -226,7 +230,7 @@ const Home = () => {
         </StatCard>
 
         {/* TARJETA 3: Solicitudes */}
-        <StatCard $color="#27ae60">
+        <StatCard to="/pedidos" $color="#27ae60">
           <IconBox $bg="#eafaf1" $color="#27ae60">
             <FaClipboardList />
           </IconBox>
