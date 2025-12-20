@@ -119,6 +119,9 @@ const Sidebar = ({ isOpen, usuario }) => {
   const nombreUsuario = usuario?.nombre || "Usuario";
   const rolUsuario = usuario?.roles?.[0] || "Sin rol";
 
+  // 🔐 SEGURIDAD VISUAL: Detectamos si es Admin
+  const esAdmin = usuario?.roles?.includes("ADMINISTRATIVO");
+
   return (
     <SidebarContainer isOpen={isOpen}>
       {/* INFO USUARIO */}
@@ -142,10 +145,13 @@ const Sidebar = ({ isOpen, usuario }) => {
         <SubMenuItem onClick={() => navigate("/inventario")}>
           Ver inventario
         </SubMenuItem>
-
-        <SubMenuItem onClick={() => navigate("/crear-producto")}>
-          Crear producto
-        </SubMenuItem>
+        
+        {/* Solo Admin puede crear productos */}
+        {esAdmin && (
+          <SubMenuItem onClick={() => navigate("/crear-producto")}>
+            Crear producto
+          </SubMenuItem>
+        )}
       </SubMenu>
 
       {/* PEDIDOS */}
@@ -161,10 +167,13 @@ const Sidebar = ({ isOpen, usuario }) => {
         <SubMenuItem onClick={() => navigate("/mis-productos")}>
           Mis Productos Asignados
         </SubMenuItem>
-        <SubMenuItem onClick={() => navigate("/pedidos-usuarios")}>
-          Lista de pedidos de usuarios
-        </SubMenuItem>
-
+        
+        {/* Solo Admin ve los pedidos de todos */}
+        {esAdmin && (
+           <SubMenuItem onClick={() => navigate("/pedidos-usuarios")}>
+             Lista de pedidos de usuarios
+           </SubMenuItem>
+        )}
       </SubMenu>
 
       {/* ASISTENCIA */}
@@ -194,10 +203,35 @@ const Sidebar = ({ isOpen, usuario }) => {
           Generar incidencias
         </SubMenuItem>
 
-        <SubMenuItem onClick={() => navigate("/lista-incidencias")}>
-          Lista de incidencias
-        </SubMenuItem>
+        {esAdmin && (
+          <SubMenuItem onClick={() => navigate("/lista-incidencias")}>
+            Lista de incidencias
+          </SubMenuItem>
+        )}
       </SubMenu>
+
+      {/* =======================================================
+           NUEVA SECCIÓN: GESTIÓN DE USUARIOS (Solo Admin)
+          ======================================================= */}
+      {esAdmin && (
+        <>
+          <MenuItem onClick={() => toggleMenu("usuarios")}>
+            Gestión de Usuarios
+            {openMenu === "usuarios" ? <FaChevronUp /> : <FaChevronDown />}
+          </MenuItem>
+
+          <SubMenu isOpen={openMenu === "usuarios"}>
+            <SubMenuItem onClick={() => navigate("/crear-usuario")}>
+              Registrar Nuevo Empleado
+            </SubMenuItem>
+            
+            {/* Aquí podrías agregar "Ver Lista de Usuarios" en el futuro */}
+            {/* <SubMenuItem onClick={() => navigate("/lista-usuarios")}>Lista de Usuarios</SubMenuItem> */}
+          
+          </SubMenu>
+        </>
+      )}
+
     </SidebarContainer>
   );
 };

@@ -130,7 +130,8 @@ const ListaIncidencias = () => {
   const [filtro, setFiltro] = useState("");
   const [fechaFiltro, setFechaFiltro] = useState("");
   const [paginaActual, setPaginaActual] = useState(1);
-  const incidenciasPorPagina = 5; // Puedes cambiarlo a 10 o 15
+  const incidenciasPorPagina = 5; // Puedes cambiarlo a 10 o 15 segun se prefiera
+
 
 
   /* 🔵 Cargar incidencias reales desde backend */

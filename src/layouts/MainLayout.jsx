@@ -293,8 +293,8 @@ const MainLayout = () => {
 
 
           <UserDropdown open={dropdownOpen}>
-            <DropdownItem>Perfil</DropdownItem>
-            <DropdownItem>Cambiar contraseña</DropdownItem>
+            <DropdownItem onClick={() => navigate("/perfil")}>Perfil</DropdownItem>
+            <DropdownItem onClick={()=>navigate("/cambiar-password") }>Cambiar contraseña</DropdownItem>
             <DropdownItem
               onClick={() => {
                 localStorage.removeItem("usuario");
