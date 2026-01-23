@@ -15,6 +15,7 @@ import ListaPedidosUsuarios from "../pages/ListaPedidosUsuarios";
 import Perfil from "../pages/Perfil";
 import CambiarPassword from "../pages/CambiarPassword";
 import CrearUsuario from "../pages/CrearUsuario";
+import SolicitudPermisos from "../pages/SolicitudPermisos";
 
 // 👇 1. CREAMOS EL GUARDIÁN PARA ADMINISTRADORES
 const AdminRoute = ({ children }) => {
@@ -50,6 +51,7 @@ const AppRoutes = () => {
             <Route path="/mis-productos" element={<MisProductos />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/cambiar-password" element={<CambiarPassword />} />
+            <Route path="/solicitud-permisos" element={<SolicitudPermisos />} />
 
             {/* --- 🔒 RUTAS SOLO PARA ADMINISTRADORES (Nicole) --- */}
 

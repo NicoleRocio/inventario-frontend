@@ -176,7 +176,7 @@ const Sidebar = ({ isOpen, usuario }) => {
         )}
       </SubMenu>
 
-      {/* ASISTENCIA */}
+      {/* ASISTENCIA (ACTUALIZADO) */}
       <MenuItem onClick={() => toggleMenu("asistencia")}>
         Asistencia
         {openMenu === "asistencia" ? <FaChevronUp /> : <FaChevronDown />}
@@ -188,7 +188,12 @@ const Sidebar = ({ isOpen, usuario }) => {
         </SubMenuItem>
 
         <SubMenuItem onClick={() => navigate("/justificaciones")}>
-          Justificaciones
+          Justificaciones (Pasadas)
+        </SubMenuItem>
+
+        {/* 👇 AQUÍ ESTÁ LA NUEVA OPCIÓN 👇 */}
+        <SubMenuItem onClick={() => navigate("/solicitud-permisos")}>
+          Solicitar Permiso/Licencia
         </SubMenuItem>
       </SubMenu>
 
@@ -210,9 +215,7 @@ const Sidebar = ({ isOpen, usuario }) => {
         )}
       </SubMenu>
 
-      {/* =======================================================
-           NUEVA SECCIÓN: GESTIÓN DE USUARIOS (Solo Admin)
-          ======================================================= */}
+      {/* GESTIÓN DE USUARIOS (Solo Admin) */}
       {esAdmin && (
         <>
           <MenuItem onClick={() => toggleMenu("usuarios")}>
@@ -225,7 +228,6 @@ const Sidebar = ({ isOpen, usuario }) => {
               Registrar Nuevo Empleado
             </SubMenuItem>
             
-            {/* Aquí podrías agregar "Ver Lista de Usuarios" en el futuro */}
             {/* <SubMenuItem onClick={() => navigate("/lista-usuarios")}>Lista de Usuarios</SubMenuItem> */}
           
           </SubMenu>
