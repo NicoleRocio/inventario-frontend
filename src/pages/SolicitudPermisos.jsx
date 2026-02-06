@@ -1,118 +1,221 @@
 import { useState, useEffect } from "react";
-import styled, { keyframes } from "styled-components";
+import styled, { keyframes, css } from "styled-components";
 import Swal from "sweetalert2";
-import { FaCloudUploadAlt, FaCalendarAlt, FaClock, FaSpinner, FaCheck } from "react-icons/fa";
+import { FaCloudUploadAlt, FaCalendarAlt, FaClock, FaSpinner, FaCheck, FaFileAlt, FaHistory, FaPlaneDeparture, FaStethoscope, FaUserClock } from "react-icons/fa";
 // 👇 IMPORTAMOS EL SERVICIO
 import { getSolicitudesByUsuario, crearSolicitud } from "../service/solicitudService";
 
-// --- ESTILOS MODERNOS Y ANIMACIONES ---
-const fadeIn = keyframes`from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); }`;
+// --- FUNCIÓN AUXILIAR: Generador de Horarios ---
+const generarHorarios = () => {
+  const horarios = [];
+  const startHour = 7; 
+  const endHour = 20;  
+  
+  for (let i = startHour; i <= endHour; i++) {
+    for (let j = 0; j < 60; j += 15) { 
+      const hour = i.toString().padStart(2, '0');
+      const min = j.toString().padStart(2, '0');
+      horarios.push(`${hour}:${min}`);
+    }
+  }
+  return horarios;
+};
+
+const timeOptions = generarHorarios();
+
+// --- ANIMACIONES ---
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 const spin = keyframes`0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }`;
 
+// --- ESTILOS MODERNOS (PREMIUM UI) ---
 const Page = styled.div`
-  padding: 40px; display: flex; flex-direction: column; align-items: center;
-  animation: ${fadeIn} 0.5s ease; background: #F0F4F8; min-height: 100vh;
+  padding: 40px 20px; 
+  padding-bottom: 250px; /* Espacio para el dropdown */
+  display: flex; 
+  flex-direction: column; 
+  align-items: center;
+  background: #f4f7f6;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 `;
 
 const Container = styled.div`
-  width: 100%; max-width: 950px; display: flex; flex-direction: column; gap: 30px;
+  width: 100%; max-width: 1000px; display: flex; flex-direction: column; gap: 40px;
+  animation: ${fadeInUp} 0.6s ease-out;
 `;
 
-// Tarjeta del Formulario
+// Tarjeta Principal con efecto "Glass" sutil
 const FormCard = styled.div`
-  background: white; padding: 35px; border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-top: 5px solid #2F4F5F;
-`;
+  background: #ffffff;
+  padding: 40px; 
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.05), 0 5px 15px rgba(0,0,0,0.02);
+  border: 1px solid rgba(255,255,255,0.8);
+  position: relative;
+  overflow: hidden;
 
-const Header = styled.div` margin-bottom: 25px; text-align: center; `;
-const Title = styled.h2` color: #2F4F5F; margin: 0; font-size: 1.8rem; `;
-const Subtitle = styled.p` color: #666; font-size: 0.95rem; margin-top: 5px; `;
-
-const FormGrid = styled.div`
-  display: grid; grid-template-columns: 1fr 1fr; gap: 25px;
-  @media(max-width: 700px) { grid-template-columns: 1fr; }
-`;
-
-const FormGroup = styled.div` display: flex; flex-direction: column; gap: 8px; `;
-const Label = styled.label` font-size: 0.9rem; font-weight: 600; color: #444; display: flex; align-items: center; gap: 8px; `;
-
-const Input = styled.input`
-  padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem; transition: 0.2s; background: #FAFAFA;
-  &:focus { border-color: #7EC4DD; background: white; outline: none; box-shadow: 0 0 0 3px rgba(126,196,221,0.2); }
-`;
-
-const Select = styled.select`
-  padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem; background: #FAFAFA;
-  &:focus { border-color: #7EC4DD; outline: none; }
-`;
-
-const TextArea = styled.textarea`
-  padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1rem; resize: none; height: 100px; grid-column: span 2; background: #FAFAFA;
-  &:focus { border-color: #7EC4DD; background: white; outline: none; }
-  @media(max-width: 700px) { grid-column: span 1; }
-`;
-
-// --- SWITCH MEJORADO ---
-const SwitchContainer = styled.div`
-  display: flex; align-items: center; gap: 15px; margin-bottom: 25px; 
-  background: #E8F4FA; padding: 15px 20px; border-radius: 12px; border: 1px solid #BFE6F5;
-`;
-const SwitchLabel = styled.span` font-weight: 600; color: #2F4F5F; cursor: pointer; user-select: none; `;
-const ToggleSwitch = styled.div`
-  position: relative; width: 50px; height: 26px; background: ${({ checked }) => checked ? '#2F4F5F' : '#ccc'};
-  border-radius: 20px; transition: 0.3s; cursor: pointer;
-  &:after {
-    content: ''; position: absolute; top: 3px; left: ${({ checked }) => checked ? '26px' : '3px'};
-    width: 20px; height: 20px; background: white; border-radius: 50%; transition: 0.3s;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  /* Decoración superior */
+  &::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, #2F4F5F, #4a7c94, #7EC4DD);
   }
 `;
 
-// --- FILE UPLOAD PERSONALIZADO ---
+const Header = styled.div` margin-bottom: 35px; text-align: center; `;
+const Title = styled.h2` 
+  color: #2F4F5F; margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.5px;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+`;
+const Subtitle = styled.p` color: #8898aa; font-size: 1rem; margin-top: 8px; font-weight: 500; `;
+
+const FormGrid = styled.div`
+  display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+  @media(max-width: 768px) { grid-template-columns: 1fr; }
+`;
+
+const FormGroup = styled.div` display: flex; flex-direction: column; gap: 10px; position: relative; `;
+
+const Label = styled.label` 
+  font-size: 0.9rem; font-weight: 700; color: #525f7f; 
+  display: flex; align-items: center; gap: 8px; transition: 0.3s;
+`;
+
+// Inputs Estilizados
+const commonInputStyles = css`
+  padding: 14px 18px; 
+  border: 2px solid #eef2f7; 
+  border-radius: 12px; 
+  font-size: 1rem; 
+  background: #fcfdfe; 
+  color: #333;
+  transition: all 0.25s ease;
+  
+  &:hover { border-color: #cbd6e2; background: #fff; }
+  &:focus { 
+    border-color: #7EC4DD; 
+    background: #fff; 
+    outline: none; 
+    box-shadow: 0 4px 12px rgba(126, 196, 221, 0.15);
+    transform: translateY(-1px);
+  }
+  &:disabled {
+    background: #e9ecef;
+    color: #adb5bd;
+    cursor: not-allowed;
+    border-color: #e9ecef;
+  }
+`;
+
+const Input = styled.input` ${commonInputStyles} `;
+const Select = styled.select` ${commonInputStyles} cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232F4F5F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 15px center; background-size: 16px; padding-right: 40px;`;
+const TextArea = styled.textarea` ${commonInputStyles} resize: none; height: 120px; grid-column: span 2; @media(max-width: 768px) { grid-column: span 1; }`;
+
+// --- SWITCH PREMIUM ---
+const SwitchContainer = styled.div`
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 35px; background: #f8fbfe; padding: 20px 25px; 
+  border-radius: 16px; border: 1px solid #eef2f7;
+  transition: 0.3s;
+  &:hover { border-color: #dbeafe; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
+`;
+const SwitchText = styled.div` display: flex; flex-direction: column; `;
+const SwitchTitle = styled.span` font-weight: 700; color: #2F4F5F; font-size: 1.05rem; `;
+const SwitchDesc = styled.span` font-size: 0.85rem; color: #8898aa; margin-top: 4px; `;
+
+const ToggleSwitch = styled.div`
+  position: relative; width: 60px; height: 32px; 
+  background: ${({ checked }) => checked ? 'linear-gradient(135deg, #2F4F5F 0%, #3e6b7f 100%)' : '#e0e6ed'};
+  border-radius: 30px; cursor: pointer; transition: 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  
+  &:after {
+    content: ''; position: absolute; top: 4px; left: ${({ checked }) => checked ? '32px' : '4px'};
+    width: 24px; height: 24px; background: white; border-radius: 50%; 
+    transition: 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+`;
+
+// --- FILE UPLOAD ---
 const FileUploadContainer = styled.div`
-  grid-column: span 2; display: flex; flex-direction: column; gap: 8px;
-  @media(max-width: 700px) { grid-column: span 1; }
+  grid-column: span 2; margin-top: 10px; @media(max-width: 768px) { grid-column: span 1; }
 `;
 const HiddenFileInput = styled.input` display: none; `;
 const FileLabel = styled.label`
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  padding: 20px; border: 2px dashed #A7D4E6; border-radius: 12px;
-  background: #F8FDFF; color: #5A8EAA; font-weight: 600; cursor: pointer; transition: 0.2s;
-  &:hover { background: #EAF8FF; border-color: #7EC4DD; }
-`;
-const FileNameDisplay = styled.div`
-  font-size: 0.9rem; color: #28a745; display: flex; align-items: center; gap: 5px; margin-top: 5px; font-weight: 600;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  padding: 30px; border: 2px dashed #cbd6e2; border-radius: 16px;
+  background: #fcfdfe; cursor: pointer; transition: all 0.3s; color: #8898aa;
+  
+  &:hover { 
+    background: #f0f7ff; border-color: #7EC4DD; color: #2F4F5F;
+    transform: translateY(-2px);
+  }
+  
+  ${({ hasFile }) => hasFile && css`
+    background: #e3f2fd; border-style: solid; border-color: #2F4F5F; color: #2F4F5F;
+  `}
 `;
 
-// --- CALCULADORA VISUAL ---
-const LiveCalc = styled.div`
-  background: #2F4F5F; color: white; padding: 10px 20px; border-radius: 8px;
-  font-size: 0.95rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center;
-  margin-top: 10px; grid-column: span 2;
-  @media(max-width: 700px) { grid-column: span 1; }
+// --- CALCULADORA TICKET ---
+const TicketCard = styled.div`
+  background: linear-gradient(135deg, #2F4F5F 0%, #1e3642 100%);
+  color: white; padding: 20px 25px; border-radius: 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 15px; grid-column: span 2;
+  box-shadow: 0 10px 25px rgba(47, 79, 95, 0.25);
+  @media(max-width: 768px) { grid-column: span 1; flex-direction: column; gap: 10px; text-align: center; }
 `;
+const TicketLabel = styled.span` font-size: 0.9rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; `;
+const TicketValue = styled.span` font-size: 1.2rem; font-weight: 800; color: #7EC4DD; `;
 
 const SubmitButton = styled.button`
-  background: linear-gradient(135deg, #2F4F5F 0%, #1e3642 100%);
-  color: white; padding: 16px; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; 
-  margin-top: 15px; width: 100%; transition: transform 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px;
-  
-  &:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(47, 79, 95, 0.3); }
-  &:disabled { background: #999; cursor: not-allowed; transform: none; }
+  background: linear-gradient(135deg, #2F4F5F 0%, #1a3a4a 100%);
+  color: white; padding: 18px; border: none; border-radius: 14px; 
+  font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px;
+  cursor: pointer; margin-top: 25px; width: 100%; 
+  transition: all 0.3s; box-shadow: 0 10px 30px rgba(47, 79, 95, 0.3);
+  display: flex; justify-content: center; align-items: center; gap: 12px;
+
+  &:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(47, 79, 95, 0.4); }
+  &:active { transform: translateY(-1px); }
+  &:disabled { background: #999; cursor: not-allowed; transform: none; box-shadow: none; }
 `;
 const Spinner = styled(FaSpinner)` animation: ${spin} 1s linear infinite; `;
 
-// Tabla de Historial
+// --- TABLA ELEGANTE ---
 const TableCard = styled.div`
-  background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  background: white; padding: 30px; border-radius: 24px; 
+  box-shadow: 0 10px 40px rgba(0,0,0,0.06); width: 100%;
 `;
-const Table = styled.table` width: 100%; border-collapse: collapse; margin-top: 15px; `;
-const Th = styled.th` background: #F0FAFD; color: #2F4F5F; padding: 15px; text-align: left; font-size: 0.9rem; border-bottom: 2px solid #D1E9F6; `;
-const Td = styled.td` padding: 15px; border-bottom: 1px solid #eee; font-size: 0.95rem; color: #555; `;
+const TableHeader = styled.div` 
+  display: flex; align-items: center; gap: 10px; margin-bottom: 25px; 
+  color: #2F4F5F; font-size: 1.3rem; font-weight: 700; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;
+`;
+const Table = styled.table` width: 100%; border-collapse: separate; border-spacing: 0 10px; `;
+const Th = styled.th` 
+  color: #8898aa; padding: 15px 20px; text-align: left; 
+  font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; 
+`;
+const Tr = styled.tr`
+  background: #fff; transition: 0.2s;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  &:hover { transform: scale(1.01); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+`;
+const Td = styled.td` 
+  padding: 20px; font-size: 0.95rem; color: #525f7f; border-top: 1px solid #f4f7f6; border-bottom: 1px solid #f4f7f6;
+  &:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-left: 1px solid #f4f7f6; }
+  &:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-right: 1px solid #f4f7f6; }
+`;
+
+// Badges de estado modernos
 const StatusBadge = styled.span`
-  padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
-  background: ${({ status }) => status === 'Aprobado' ? '#D4EDDA' : status === 'Rechazado' ? '#F8D7DA' : '#FFF3CD'};
-  color: ${({ status }) => status === 'Aprobado' ? '#155724' : status === 'Rechazado' ? '#721C24' : '#856404'};
+  padding: 8px 16px; border-radius: 30px; font-size: 0.8rem; font-weight: 700; display: inline-block;
+  ${({ status }) => status === 'Aprobado' && css`background: #e0fbf0; color: #1aae6f;`}
+  ${({ status }) => status === 'Rechazado' && css`background: #fee6e6; color: #f5365c;`}
+  ${({ status }) => status === 'Pendiente' && css`background: #fff4cc; color: #ffab00;`}
 `;
 
 const SolicitudPermisos = () => {
@@ -121,7 +224,6 @@ const SolicitudPermisos = () => {
   const [loading, setLoading] = useState(false);
   const [archivo, setArchivo] = useState(null);
   
-  // Obtenemos la fecha de hoy para bloquear días pasados (YYYY-MM-DD)
   const today = new Date().toISOString().split("T")[0];
 
   const [formData, setFormData] = useState({
@@ -136,11 +238,8 @@ const SolicitudPermisos = () => {
 
   const usuario = JSON.parse(localStorage.getItem("usuario"));
 
-  useEffect(() => {
-    if (usuario?.id) cargarHistorial();
-  }, []);
+  useEffect(() => { if (usuario?.id) cargarHistorial(); }, []);
 
-  // Limpiar fecha fin si cambiamos de modo
   useEffect(() => {
     setFormData(prev => ({ ...prev, fechaFin: esPorHoras ? prev.fechaInicio : "" }));
   }, [esPorHoras]);
@@ -152,8 +251,16 @@ const SolicitudPermisos = () => {
     } catch (err) { console.error(err); }
   };
 
+  // 👇 handleChange MEJORADO: Resetea la hora fin si cambias la inicio
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => {
+      // Si cambia la "Hora Salida", limpiamos la "Hora Retorno" por seguridad
+      if (name === "horaInicio") {
+        return { ...prev, [name]: value, horaFin: "" };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleFileChange = (e) => {
@@ -163,7 +270,7 @@ const SolicitudPermisos = () => {
         Swal.fire("Archivo incorrecto", "Solo se permiten archivos PDF", "error");
         return;
       }
-      if (file.size > 5 * 1024 * 1024) { // 5MB
+      if (file.size > 5 * 1024 * 1024) { 
         Swal.fire("Archivo muy pesado", "Máximo 5MB", "warning");
         return;
       }
@@ -171,25 +278,25 @@ const SolicitudPermisos = () => {
     }
   };
 
-  // --- CÁLCULO VISUAL EN TIEMPO REAL ---
+  // 👇 FILTRO DE HORAS: Solo muestra horas mayores a la de inicio
+  const horasRetornoDisponibles = timeOptions.filter(time => {
+    if (!formData.horaInicio) return false; // Si no hay inicio, no mostramos nada
+    return time > formData.horaInicio;
+  });
+
   const getCalculoVisual = () => {
     if (esPorHoras) {
-      if (formData.horaInicio && formData.horaFin) {
-        return `⏱️ Horas: De ${formData.horaInicio} a ${formData.horaFin}`;
-      }
-      return "Seleccione horas...";
+      if (formData.horaInicio && formData.horaFin) return `⏱️ ${formData.horaInicio} - ${formData.horaFin}`;
+      return "---";
     } else {
       if (formData.fechaInicio && formData.fechaFin) {
         const start = new Date(formData.fechaInicio);
         const end = new Date(formData.fechaFin);
-        // Calculamos diferencia en milisegundos
         const diffTime = end - start;
-        // Convertimos a días (+1 para incluir el último día)
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
-        
-        return diffDays > 0 ? `📅 Total: ${diffDays} días` : "Fechas inválidas";
+        return diffDays > 0 ? `${diffDays} Días Solicitados` : "Fechas inválidas";
       }
-      return "Seleccione rango de fechas...";
+      return "---";
     }
   };
 
@@ -197,7 +304,6 @@ const SolicitudPermisos = () => {
     e.preventDefault();
     setLoading(true);
 
-    // 1. VALIDACIONES
     if (!formData.tipoSolicitud || !formData.fechaInicio) {
       Swal.fire("Falta información", "Complete los campos obligatorios", "warning");
       setLoading(false); return;
@@ -223,7 +329,6 @@ const SolicitudPermisos = () => {
       }
     }
 
-    // 2. PREPARAR DATOS
     const datosEnviar = {
       tipoSolicitud: formData.tipoSolicitud,
       motivo: formData.motivo,
@@ -238,7 +343,12 @@ const SolicitudPermisos = () => {
 
     try {
       await crearSolicitud(usuario.id, datosEnviar);
-      Swal.fire("¡Éxito!", "Solicitud enviada correctamente.", "success");
+      Swal.fire({
+        title: "¡Solicitud Enviada!",
+        text: "Tu solicitud ha sido registrada correctamente.",
+        icon: "success",
+        confirmButtonColor: "#2F4F5F"
+      });
       
       setFormData({ tipoSolicitud: "", motivo: "", fechaInicio: "", fechaFin: "", horaInicio: "", horaFin: "", descripcion: "" });
       setArchivo(null);
@@ -255,25 +365,25 @@ const SolicitudPermisos = () => {
       <Container>
         <FormCard>
           <Header>
-            <Title>Solicitud de Permisos y Licencias</Title>
-            <Subtitle>Complete el formulario para gestionar su ausencia.</Subtitle>
+            <Title><FaPlaneDeparture /> Solicitud de Permisos</Title>
+            <Subtitle>Gestione sus ausencias, vacaciones y licencias médicas en un solo lugar.</Subtitle>
           </Header>
           
           <form onSubmit={handleSubmit}>
             
-            {/* SWITCH MEJORADO */}
             <SwitchContainer>
+              <SwitchText>
+                <SwitchTitle>Modo: Permiso por Horas</SwitchTitle>
+                <SwitchDesc>Actívelo para citas médicas o trámites breves (menos de un día).</SwitchDesc>
+              </SwitchText>
               <ToggleSwitch checked={esPorHoras} onClick={() => setEsPorHoras(!esPorHoras)} />
-              <SwitchLabel onClick={() => setEsPorHoras(!esPorHoras)}>
-                {esPorHoras ? "Modo: Permiso por Horas (Cita médica)" : "Modo: Licencia por Días (Vacaciones)"}
-              </SwitchLabel>
             </SwitchContainer>
 
             <FormGrid>
               <FormGroup>
-                <Label>Tipo de Asistencia</Label>
+                <Label><FaUserClock color="#7EC4DD"/> Tipo de Solicitud</Label>
                 <Select name="tipoSolicitud" value={formData.tipoSolicitud} onChange={handleChange} required>
-                  <option value="">-- Seleccione --</option>
+                  <option value="">-- Seleccione una opción --</option>
                   <option value="Salud">Licencia por Salud</option>
                   <option value="Personal">Asuntos Personales</option>
                   <option value="Vacaciones">Vacaciones</option>
@@ -283,17 +393,16 @@ const SolicitudPermisos = () => {
               </FormGroup>
 
               <FormGroup>
-                <Label>Motivo Específico</Label>
+                <Label><FaFileAlt color="#7EC4DD"/> Motivo Específico</Label>
                 <Input 
                   name="motivo" 
-                  placeholder="Ej: Trámite bancario, Cita médica..." 
+                  placeholder="Ej: Cita en EsSalud, Trámite Notarial..." 
                   value={formData.motivo} 
                   onChange={handleChange} 
                   required
                 />
               </FormGroup>
 
-              {/* FECHAS INTERACTIVAS */}
               <FormGroup>
                 <Label><FaCalendarAlt color="#7EC4DD"/> Fecha Inicio</Label>
                 <Input 
@@ -301,7 +410,7 @@ const SolicitudPermisos = () => {
                   name="fechaInicio" 
                   value={formData.fechaInicio} 
                   onChange={handleChange} 
-                  min={today} // Bloquea días pasados
+                  min={today} 
                   required 
                 />
               </FormGroup>
@@ -314,7 +423,7 @@ const SolicitudPermisos = () => {
                     name="fechaFin" 
                     value={formData.fechaFin} 
                     onChange={handleChange} 
-                    min={formData.fechaInicio || today} // Bloquea fechas anteriores a la de inicio
+                    min={formData.fechaInicio || today} 
                     required 
                   />
                 </FormGroup>
@@ -322,53 +431,60 @@ const SolicitudPermisos = () => {
                 <>
                   <FormGroup>
                     <Label><FaClock color="#7EC4DD"/> Hora Salida</Label>
-                    <Input type="time" name="horaInicio" value={formData.horaInicio} onChange={handleChange} required />
+                    <Select name="horaInicio" value={formData.horaInicio} onChange={handleChange} required>
+                      <option value="">-- Seleccione --</option>
+                      {timeOptions.map((time) => (<option key={`s-${time}`} value={time}>{time}</option>))}
+                    </Select>
                   </FormGroup>
+
                   <FormGroup>
                     <Label><FaClock color="#7EC4DD"/> Hora Retorno</Label>
-                    <Input type="time" name="horaFin" value={formData.horaFin} onChange={handleChange} required />
+                    {/* 👇 SELECT MEJORADO: Usamos las horas filtradas y bloqueamos si no hay inicio */}
+                    <Select 
+                        name="horaFin" 
+                        value={formData.horaFin} 
+                        onChange={handleChange} 
+                        required
+                        disabled={!formData.horaInicio}
+                    >
+                      <option value="">
+                        {formData.horaInicio ? "-- Seleccione --" : "-- Primero elija salida --"}
+                      </option>
+                      {horasRetornoDisponibles.map((time) => (
+                        <option key={`e-${time}`} value={time}>{time}</option>
+                      ))}
+                    </Select>
                   </FormGroup>
                 </>
               )}
 
-              {/* CALCULADORA VISUAL */}
-              <LiveCalc>
-                <span>Resumen:</span>
-                <span>{getCalculoVisual()}</span>
-              </LiveCalc>
+              <TicketCard>
+                <TicketLabel>Resumen de Tiempo</TicketLabel>
+                <TicketValue>{getCalculoVisual()}</TicketValue>
+              </TicketCard>
 
               <TextArea 
                 name="descripcion" 
-                placeholder="Detalles adicionales (Opcional)..." 
+                placeholder="Detalles adicionales para su supervisor (Opcional)..." 
                 value={formData.descripcion} 
                 onChange={handleChange}
               />
 
-              {/* SUBIDA DE ARCHIVO MEJORADA */}
               <FileUploadContainer>
-                <Label>Adjuntar Evidencia (PDF)</Label>
+                <Label>Evidencia o Sustento (PDF)</Label>
                 <HiddenFileInput 
-                  type="file" 
-                  id="pdfUpload" 
-                  accept="application/pdf" 
-                  onChange={handleFileChange}
+                  type="file" id="pdfUpload" accept="application/pdf" onChange={handleFileChange}
                 />
-                <FileLabel htmlFor="pdfUpload">
-                  <FaCloudUploadAlt size={24} /> 
-                  {archivo ? "Cambiar archivo" : "Click para subir PDF"}
+                <FileLabel htmlFor="pdfUpload" hasFile={!!archivo}>
+                  {archivo ? <FaCheck size={32} /> : <FaCloudUploadAlt size={40} color="#cbd6e2" />}
+                  <span style={{fontWeight:600}}>{archivo ? archivo.name : "Haga click o arrastre su archivo PDF aquí"}</span>
                 </FileLabel>
-                {archivo && (
-                  <FileNameDisplay>
-                    <FaCheck /> Listo: {archivo.name}
-                  </FileNameDisplay>
-                )}
               </FileUploadContainer>
 
             </FormGrid>
 
-            {/* BOTÓN CON LOADING */}
             <SubmitButton type="submit" disabled={loading}>
-              {loading ? <><Spinner /> Procesando...</> : "Enviar Solicitud"}
+              {loading ? <><Spinner /> Enviando Solicitud...</> : "Registrar Solicitud"}
             </SubmitButton>
 
           </form>
@@ -376,46 +492,61 @@ const SolicitudPermisos = () => {
 
         {/* HISTORIAL */}
         <TableCard>
-          <h3 style={{color:'#2F4F5F', margin:'0 0 20px 0'}}>Mis Solicitudes Recientes</h3>
-          <Table>
-            <thead>
-              <tr>
-                <Th>Tipo</Th>
-                <Th>Detalle de Tiempo</Th>
-                <Th>Duración</Th>
-                <Th>Estado</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {permisos.length === 0 ? (
-                <tr><Td colSpan="4" style={{textAlign:'center'}}>No hay historial disponible.</Td></tr>
-              ) : (
-                permisos.map((p) => (
-                  <tr key={p.id}>
-                    <Td>
-                      <strong>{p.tipoSolicitud}</strong><br/>
-                      <span style={{fontSize:'0.85rem', color:'#888'}}>{p.motivo}</span>
-                    </Td>
-                    <Td>
-                      {p.esPorHoras ? (
-                        <>📅 {p.fechaInicio} <br/> ⏰ {p.horaInicio} - {p.horaFin}</>
-                      ) : (
-                        <>📅 Del {p.fechaInicio} <br/> al {p.fechaFin}</>
-                      )}
-                    </Td>
-                    <Td>
-                      {p.esPorHoras ? (
-                        <span style={{color:'#007bff', fontWeight:'bold'}}>{p.totalHoras} hrs</span>
-                      ) : (
-                        <span style={{color:'#28a745', fontWeight:'bold'}}>{p.totalDias} días</span>
-                      )}
-                    </Td>
-                    <Td><StatusBadge status={p.estado}>{p.estado}</StatusBadge></Td>
+          <TableHeader><FaHistory /> Historial Reciente</TableHeader>
+          {permisos.length === 0 ? (
+            <p style={{textAlign:'center', color:'#888', fontStyle:'italic'}}>No se han encontrado registros recientes.</p>
+          ) : (
+            <div style={{overflowX: 'auto'}}>
+              <Table>
+                <thead>
+                  <tr>
+                    <Th>Tipo / Motivo</Th>
+                    <Th>Periodo Solicitado</Th>
+                    <Th>Tiempo Total</Th>
+                    <Th>Estado Actual</Th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </Table>
+                </thead>
+                <tbody>
+                  {permisos.map((p) => (
+                    <Tr key={p.id}>
+                      <Td>
+                        <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                          <div style={{background:'#e3f2fd', padding:'8px', borderRadius:'8px', color:'#2F4F5F'}}>
+                            {p.tipoSolicitud === 'Salud' ? <FaStethoscope/> : <FaFileAlt/>}
+                          </div>
+                          <div>
+                            <strong style={{color:'#2F4F5F', display:'block'}}>{p.tipoSolicitud}</strong>
+                            <span style={{fontSize:'0.85rem', color:'#8898aa'}}>{p.motivo}</span>
+                          </div>
+                        </div>
+                      </Td>
+                      <Td>
+                        {p.esPorHoras ? (
+                          <div style={{fontSize:'0.9rem'}}>
+                            <div style={{fontWeight:'bold', color:'#525f7f'}}>{p.fechaInicio}</div>
+                            <div style={{color:'#8898aa'}}>⏰ {p.horaInicio} - {p.horaFin}</div>
+                          </div>
+                        ) : (
+                          <div style={{fontSize:'0.9rem'}}>
+                             <div style={{color:'#525f7f'}}>Desde: <strong>{p.fechaInicio}</strong></div>
+                             <div style={{color:'#525f7f'}}>Hasta: <strong>{p.fechaFin}</strong></div>
+                          </div>
+                        )}
+                      </Td>
+                      <Td>
+                        {p.esPorHoras ? (
+                          <span style={{color:'#11cdef', fontWeight:'bold', background:'rgba(17, 205, 239, 0.1)', padding:'4px 8px', borderRadius:'4px'}}>{p.totalHoras} hrs</span>
+                        ) : (
+                          <span style={{color:'#2dce89', fontWeight:'bold', background:'rgba(45, 206, 137, 0.1)', padding:'4px 8px', borderRadius:'4px'}}>{p.totalDias} días</span>
+                        )}
+                      </Td>
+                      <Td><StatusBadge status={p.estado}>{p.estado}</StatusBadge></Td>
+                    </Tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
         </TableCard>
       </Container>
     </Page>
