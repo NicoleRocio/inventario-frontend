@@ -4,7 +4,7 @@ import { getUsuarioById } from "../service/usuarioService";
 import { FaUserCircle, FaIdBadge, FaUserTag, FaBriefcase } from "react-icons/fa";
 import Swal from "sweetalert2";
 
-// --- ESTILOS ---
+// --- ESTILOOS ---
 const fadeIn = keyframes`from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }`;
 
 const Container = styled.div`

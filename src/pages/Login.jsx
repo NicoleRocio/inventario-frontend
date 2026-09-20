@@ -5,7 +5,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
 import logoColegio from "../assets/logo-colegio.png";
 
-// --- ESTILOS ---
+// --- ESTILOSS ---
 
 const shine = keyframes`
   0% { background-position: 0% 50%; }

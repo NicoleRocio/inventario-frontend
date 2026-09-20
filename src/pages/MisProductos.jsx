@@ -5,7 +5,7 @@ import { getProductosAsignados } from "../service/pedidoService";
 const usuarioLogueado = JSON.parse(localStorage.getItem("usuario"));
 
 /* ================================
-   🎨 ANIMACIÓN
+   🎨 ANIMMACIÓN
 ================================ */
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(5px); }
